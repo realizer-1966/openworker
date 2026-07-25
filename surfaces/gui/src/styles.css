@@ -1725,10 +1725,17 @@ html[data-platform="linux"] ::-webkit-scrollbar-thumb:hover { background-color: 
     flex: 1;
     min-height: 0;
     overflow: hidden !important;
+    /* 모바일에서 page-subnav(가로 바) + 콘텐츠를 세로 배치 — row면 콘텐츠가 0px이 됨 */
+    flex-direction: column !important;
   }
   .surface-fullpage main > div {
     padding-top: 8px !important;
     padding-bottom: 16px !important;
+  }
+  /* page-subnav 아래의 콘텐츠 스크롤 영역이 남은 높이를 채우도록 */
+  .surface-fullpage main > div.overflow-y-auto {
+    flex: 1;
+    min-height: 0;
   }
   /* full-page surface 가 열려 있을 때 하단 탭바 숨김 */
   .app:not(.mobile-tab-session) .mobile-tab-bar { display: none !important; }

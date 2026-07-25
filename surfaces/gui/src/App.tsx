@@ -1672,7 +1672,7 @@ export function App() {
         <nav className="mobile-tab-bar" aria-label="Mobile navigation">
           {(["sidebar", "chat", "rail"] as const).map((tab) => {
             const icons: Record<string, IconName> = { sidebar: "sidebar", chat: "chat", rail: "sidebarRight" };
-            const labels: Record<string, string> = { sidebar: "Sessions", chat: "Chat", rail: "Panel" };
+            const labels: Record<string, string> = { sidebar: "Sessions", chat: "Chat", rail: "Settings" };
             return (
               <button
                 key={tab}
