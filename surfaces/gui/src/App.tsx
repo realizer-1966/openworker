@@ -147,6 +147,17 @@ export function App() {
   const [workspace, setWorkspace] = useState<string | null>(null);
   const [branch, setBranch] = useState<string | null>(null);
   const [showGate, setShowGate] = useState(false);
+  // Mobile tab state: "chat" | "sidebar" | "rail" — drives the bottom tab bar on narrow screens.
+  const [mobileTab, setMobileTab] = useState<"chat" | "sidebar" | "rail">("chat");
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" && window.matchMedia("(max-width: 1200px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1200px)");
+    const onChange = () => setIsMobile(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
   const [workspaceTrustRequest, setWorkspaceTrustRequest] =
     useState<WorkspaceCommandTrust | null>(null);
   const [agent, setAgent] = useState("cowork");
@@ -1157,7 +1168,8 @@ export function App() {
         "app" +
         (overlay ? " tauri-overlay" : "") +
         (navCollapsed ? " nav-collapsed" : "") +
-        (navCollapsed && navPeek ? " nav-peek" : "")
+        (navCollapsed && navPeek ? " nav-peek" : "") +
+        (isMobile ? " mobile-tab-" + mobileTab : "")
       }
     >
       {/* Dev-only fake traffic lights so ?overlay=1 previews the real desktop top-left. */}
@@ -1250,6 +1262,8 @@ export function App() {
           }}
         />
       )}
+      {/* Sidebar: 모바일에서는 mobileTab === "sidebar"일 때만 렌더링 */}
+      {(!isMobile || mobileTab === "sidebar") && (
       <Sidebar
         agent={agent}
         workspace={workspace || ""}
@@ -1286,6 +1300,7 @@ export function App() {
         onCollapse={toggleNav}
         onPeekLeave={() => setNavPeek(false)}
       />
+      )}
       {surface === "scheduled" ? (
         <ScheduledView
           onOpenRun={openRunSession}
@@ -1312,7 +1327,7 @@ export function App() {
           }
           onOpenIntegrations={() => setSurface("integrations")}
         />
-      ) : (
+      ) : (!isMobile || mobileTab === "chat" || mobileTab === "rail") ? (
       <div className={"main" + (surface === "session" && agent !== "chat" && !railHidden ? " rail-open" : "")}>
         <div className="main-topbar">
           {/* Left: the contextual cluster — [sidebar] [+ new session] [search] — rendered ONLY
@@ -1580,7 +1595,7 @@ export function App() {
             />
                   </div>
           <RightRail
-            active={surface === "session" && agent !== "chat" && !railHidden}
+            active={isMobile ? mobileTab === "rail" : surface === "session" && agent !== "chat" && !railHidden}
             sessionId={sessionId}
             refreshKey={browserRefreshKey}
             toolNames={items.filter((i) => i.kind === "tool").map((i: any) => i.name)}
@@ -1598,7 +1613,7 @@ export function App() {
           />
         </div>
       </div>
-      )}
+      ) : null}
 
       {/* Search from the collapsed-sidebar topbar cluster (the sidebar's own instance is
           unreachable while it's collapsed). */}
@@ -1633,6 +1648,35 @@ export function App() {
           request={workspaceTrustRequest}
           onClose={() => setWorkspaceTrustRequest(null)}
         />
+      )}
+      {/* Mobile bottom tab bar — 3 panes → 3 tabs (≤900px). Hidden on desktop via CSS. */}
+      {isMobile && (
+        <nav className="mobile-tab-bar" aria-label="Mobile navigation">
+          <button
+            className={"mobile-tab-btn" + (mobileTab === "sidebar" ? " active" : "")}
+            onClick={() => setMobileTab("sidebar")}
+            aria-label="Sessions"
+          >
+            <Icon name="sidebar" size={20} />
+            <span className="mobile-tab-btn-label">Sessions</span>
+          </button>
+          <button
+            className={"mobile-tab-btn" + (mobileTab === "chat" ? " active" : "")}
+            onClick={() => setMobileTab("chat")}
+            aria-label="Chat"
+          >
+            <Icon name="chat" size={20} />
+            <span className="mobile-tab-btn-label">Chat</span>
+          </button>
+          <button
+            className={"mobile-tab-btn" + (mobileTab === "rail" ? " active" : "")}
+            onClick={() => setMobileTab("rail")}
+            aria-label="Panel"
+          >
+            <Icon name="sidebarRight" size={20} />
+            <span className="mobile-tab-btn-label">Panel</span>
+          </button>
+        </nav>
       )}
     </div>
   );

@@ -127,10 +127,13 @@ def _build_gemini(profile: dict[str, Any], secrets: Any) -> ProviderClient:
 
 
 def _build_ollama(profile: dict[str, Any], secrets: Any) -> ProviderClient:
-    # Ollama's OpenAI-compatible endpoint ignores the key but the SDK requires a non-empty
-    # string, so we pass a placeholder. `base_url` comes from the stored profile (or the default).
+    # Ollama's OpenAI-compatible endpoint ignores the key for local servers, but the SDK
+    # requires a non-empty string, so we pass a placeholder. For Ollama Cloud, the api_key
+    # from the stored profile takes precedence. `base_url` comes from the stored profile
+    # (or the default localhost).
     base_url = _normalize_ollama_url((profile or {}).get("base_url"))
-    return OpenAIProvider(api_key="ollama", base_url=base_url)
+    api_key = ((profile or {}).get("api_key") or "").strip() or "ollama"
+    return OpenAIProvider(api_key=api_key, base_url=base_url)
 
 
 def _openai_compat(vendor: str, default_base_url: str, env_key: Optional[str] = None):

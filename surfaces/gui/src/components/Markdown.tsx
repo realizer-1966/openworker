@@ -34,8 +34,22 @@ function ArtifactChip({ path, title }: { path: string; title: string }) {
 
 // Assistant messages rendered as GitHub-flavored markdown (headings, lists, tables, code,
 // links). Links open externally — never navigate the app shell — except artifact: links,
-// which open the session's artifact viewer.
-export function Markdown({ text }: { text: string }) {
+// which open the session's artifact viewer. LaTeX arrow symbols are replaced with Unicode.
+function replaceLatexArrows(text: string): string {
+  return text
+    .replace(/\$\\rightarrow\$/g, "→")
+    .replace(/\$\\leftarrow\$/g, "←")
+    .replace(/\$\\Rightarrow\$/g, "⇒")
+    .replace(/\$\\Leftarrow\$/g, "⇐")
+    .replace(/\$\\leftrightarrow\$/g, "↔")
+    .replace(/\$\\Leftrightarrow\$/g, "⇔")
+    .replace(/\$\\mapsto\$/g, "↦")
+    .replace(/\\rightarrow/g, "→")
+    .replace(/\\leftarrow/g, "←")
+    .replace(/\\Rightarrow/g, "⇒")
+    .replace(/\\Leftarrow/g, "⇐");
+}
+export function Markdown({ text }: { text }) {
   return (
     <div className="md">
       <ReactMarkdown
@@ -57,7 +71,7 @@ export function Markdown({ text }: { text: string }) {
           },
         }}
       >
-        {text}
+        {replaceLatexArrows(text)}
       </ReactMarkdown>
     </div>
   );
