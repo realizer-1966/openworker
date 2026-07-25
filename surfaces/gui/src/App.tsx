@@ -35,7 +35,7 @@ import { itemsFromMessages } from "./itemsFromMessages";
 import { streamMode } from "./streamGate";
 import { InboxItemCard } from "./components/InboxItemCard";
 import { isTauri, platformOS, startWindowDrag } from "./tauri";
-import { Icon } from "./components/Icon";
+import { Icon, type IconName } from "./components/Icon";
 import { Sidebar } from "./components/Sidebar";
 import { ThinkingBlock, Transcript } from "./components/Transcript";
 import { Composer } from "./components/Composer";
@@ -56,6 +56,7 @@ import { ApprovalCard } from "./components/ApprovalCard";
 import { DirectoryRequestCard } from "./components/DirectoryRequestCard";
 import { PlanCard } from "./components/PlanCard";
 import { WorkspaceTrustPrompt } from "./components/WorkspaceTrustPrompt";
+import { MobileSubNav } from "./components/MobileSubNav";
 
 const newId = () =>
   (crypto as any).randomUUID ? crypto.randomUUID().slice(0, 12) : Math.random().toString(36).slice(2, 14);
@@ -1169,7 +1170,8 @@ export function App() {
         (overlay ? " tauri-overlay" : "") +
         (navCollapsed ? " nav-collapsed" : "") +
         (navCollapsed && navPeek ? " nav-peek" : "") +
-        (isMobile ? " mobile-tab-" + mobileTab : "")
+        (isMobile ? " mobile-tab-" + mobileTab : "") +
+        (isMobile && surface === "session" ? " mobile-tab-session" : "")
       }
     >
       {/* Dev-only fake traffic lights so ?overlay=1 previews the real desktop top-left. */}
@@ -1262,8 +1264,9 @@ export function App() {
           }}
         />
       )}
-      {/* Sidebar: 모바일에서는 mobileTab === "sidebar"일 때만 렌더링 */}
-      {(!isMobile || mobileTab === "sidebar") && (
+      {/* Sidebar: 모바일에서는 mobileTab === "sidebar" && surface === "session"일 때만 렌더링.
+          full-page surface가 열려 있을 때는 사이드바를 숨긴다 (겹침 방지). */}
+      {(!isMobile || (mobileTab === "sidebar" && surface === "session")) && (
       <Sidebar
         agent={agent}
         workspace={workspace || ""}
@@ -1302,31 +1305,44 @@ export function App() {
       />
       )}
       {surface === "scheduled" ? (
-        <ScheduledView
-          onOpenRun={openRunSession}
-          onRunNow={runTaskNow}
-          initialOpenId={scheduledOpenId}
-        />
+        <div className="surface-fullpage">
+          {isMobile && <MobileSubNav title="Automations" onBack={() => setSurface("session")} />}
+          <ScheduledView onOpenRun={openRunSession} onRunNow={runTaskNow} initialOpenId={scheduledOpenId} />
+        </div>
       ) : surface === "integrations" ? (
-        <IntegrationsView />
+        <div className="surface-fullpage">
+          {isMobile && <MobileSubNav title="Connectors" onBack={() => setSurface("session")} />}
+          <IntegrationsView />
+        </div>
       ) : surface === "settings" ? (
-        <SettingsView
-          key={settingsTab}
-          initialTab={settingsTab}
-          onOpenPersona={(id) => openPersona(id, "settings")}
-        />
+        <div className="surface-fullpage">
+          {isMobile && <MobileSubNav title="Settings" onBack={() => setSurface("session")} />}
+          <SettingsView key={settingsTab} initialTab={settingsTab} onOpenPersona={(id) => openPersona(id, "settings")} />
+        </div>
       ) : surface === "audit" ? (
-        <AuditView />
+        <div className="surface-fullpage">
+          {isMobile && <MobileSubNav title="Activity" onBack={() => setSurface("session")} />}
+          <AuditView />
+        </div>
       ) : surface === "inbox" ? (
-        <InboxView onOpenSession={openSessionFromInbox} />
+        <div className="surface-fullpage">
+          {isMobile && <MobileSubNav title="Inbox" onBack={() => setSurface("session")} />}
+          <InboxView onOpenSession={openSessionFromInbox} />
+        </div>
       ) : surface === "persona" ? (
-        <PersonaView
-          personaId={personaViewId || agent}
-          onBack={() =>
-            personaViewReturn === "settings" ? openSettings("personas") : setSurface("session")
-          }
-          onOpenIntegrations={() => setSurface("integrations")}
-        />
+        <div className="surface-fullpage">
+          {isMobile && (
+            <MobileSubNav
+              title="Persona"
+              onBack={() => (personaViewReturn === "settings" ? openSettings("personas") : setSurface("session"))}
+            />
+          )}
+          <PersonaView
+            personaId={personaViewId || agent}
+            onBack={() => (personaViewReturn === "settings" ? openSettings("personas") : setSurface("session"))}
+            onOpenIntegrations={() => setSurface("integrations")}
+          />
+        </div>
       ) : (!isMobile || mobileTab === "chat" || mobileTab === "rail") ? (
       <div className={"main" + (surface === "session" && agent !== "chat" && !railHidden ? " rail-open" : "")}>
         <div className="main-topbar">
@@ -1649,33 +1665,29 @@ export function App() {
           onClose={() => setWorkspaceTrustRequest(null)}
         />
       )}
-      {/* Mobile bottom tab bar — 3 panes → 3 tabs (≤900px). Hidden on desktop via CSS. */}
+      {/* Mobile bottom tab bar — 3 panes → 3 tabs (≤1200px). Hidden on desktop via CSS.
+          Tapping any tab while a full-page surface is open returns to the session view —
+          the tabs are session-scoped. */}
       {isMobile && (
         <nav className="mobile-tab-bar" aria-label="Mobile navigation">
-          <button
-            className={"mobile-tab-btn" + (mobileTab === "sidebar" ? " active" : "")}
-            onClick={() => setMobileTab("sidebar")}
-            aria-label="Sessions"
-          >
-            <Icon name="sidebar" size={20} />
-            <span className="mobile-tab-btn-label">Sessions</span>
-          </button>
-          <button
-            className={"mobile-tab-btn" + (mobileTab === "chat" ? " active" : "")}
-            onClick={() => setMobileTab("chat")}
-            aria-label="Chat"
-          >
-            <Icon name="chat" size={20} />
-            <span className="mobile-tab-btn-label">Chat</span>
-          </button>
-          <button
-            className={"mobile-tab-btn" + (mobileTab === "rail" ? " active" : "")}
-            onClick={() => setMobileTab("rail")}
-            aria-label="Panel"
-          >
-            <Icon name="sidebarRight" size={20} />
-            <span className="mobile-tab-btn-label">Panel</span>
-          </button>
+          {(["sidebar", "chat", "rail"] as const).map((tab) => {
+            const icons: Record<string, IconName> = { sidebar: "sidebar", chat: "chat", rail: "sidebarRight" };
+            const labels: Record<string, string> = { sidebar: "Sessions", chat: "Chat", rail: "Panel" };
+            return (
+              <button
+                key={tab}
+                className={"mobile-tab-btn" + (mobileTab === tab && surface === "session" ? " active" : "")}
+                onClick={() => {
+                  if (surface !== "session") setSurface("session");
+                  setMobileTab(tab);
+                }}
+                aria-label={labels[tab]}
+              >
+                <Icon name={icons[tab]} size={20} />
+                <span className="mobile-tab-btn-label">{labels[tab]}</span>
+              </button>
+            );
+          })}
         </nav>
       )}
     </div>

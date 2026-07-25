@@ -1709,6 +1709,91 @@ html[data-platform="linux"] ::-webkit-scrollbar-thumb:hover { background-color: 
   /* --- Full-page surfaces (settings, etc.) --- */
   .main-workspace { flex: 1 !important; }
 
+  /*
+   * Full-page surface wrapper — 모바일에서 전체 화면을 차지한다.
+   * .app 가 단일 컬럼이므로 surface-fullpage 의 <main> 이 유일한 flex 자식이 된다.
+   * surface 가 session 이 아닐 때는 하단 3탭바를 숨기고 MobileSubNav 의 ← 버튼으로 돌아간다.
+   */
+  .surface-fullpage {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .surface-fullpage > main {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden !important;
+  }
+  .surface-fullpage main > div {
+    padding-top: 8px !important;
+    padding-bottom: 16px !important;
+  }
+  /* full-page surface 가 열려 있을 때 하단 탭바 숨김 */
+  .app:not(.mobile-tab-session) .mobile-tab-bar { display: none !important; }
+
+  /*
+   * Mobile sub-nav — full-page surface 위의 ← 버튼 + 타이틀 바 (44px).
+   * 데스크톱에서는 렌더링되지 않으므로 (App.tsx 의 isMobile 조건) display:none 불필요.
+   */
+  .mobile-subnav {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 8px 0 4px;
+    background: var(--panel) !important;
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .mobile-subnav-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .mobile-subnav-back:active { background: var(--paper); }
+  .mobile-subnav-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /*
+   * page-subnav (Settings/Connectors 좌측 탭) — 모바일에서 208px 세로 바를
+   * 가로 스크롤 바로 변환. 헤더 div 는 MobileSubNav 가 이미 타이틀을 표시하므로 숨김.
+   */
+  .surface-fullpage .page-subnav {
+    width: 100% !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--line) !important;
+    padding: 6px 8px !important;
+    gap: 2px !important;
+    flex-shrink: 0 !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .surface-fullpage .page-subnav > div:first-child {
+    display: none !important;
+  }
+  .surface-fullpage .page-subnav button {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
   /* --- Bottom tab bar --- */
   .mobile-tab-bar {
     position: fixed !important;

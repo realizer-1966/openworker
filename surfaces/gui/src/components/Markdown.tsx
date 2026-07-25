@@ -49,7 +49,7 @@ function replaceLatexArrows(text: string): string {
     .replace(/\\Rightarrow/g, "⇒")
     .replace(/\\Leftarrow/g, "⇐");
 }
-export function Markdown({ text }: { text }) {
+export function Markdown({ text }: { text: string }) {
   return (
     <div className="md">
       <ReactMarkdown
