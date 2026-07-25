@@ -6,3 +6,6 @@ __pycache__/
 build/
 dist/
 .coverage
+
+# Dev env (port override for Termux 8766 setup)
+surfaces/gui/.env
