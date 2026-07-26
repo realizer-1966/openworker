@@ -810,6 +810,13 @@ export function App() {
   useEffect(() => {
     if (atBottomRef.current) scrollToBottom();
   }, [items, streaming]);
+  // Chat 탭으로 전환하거나 브라우저 새로고침 직후: 맨 아래로 이동
+  useEffect(() => {
+    if (mobileTab !== "chat") return;
+    atBottomRef.current = true;
+    setFollowing(true);
+    requestAnimationFrame(() => scrollToBottom());
+  }, [mobileTab, uiReady]);
 
   // Track produced-file count for the topbar "Artifacts" affordance (works even when the rail is
   // hidden, where the rail itself doesn't fetch). Cowork only; refreshes on file writes/turn end.
@@ -1555,6 +1562,7 @@ export function App() {
               running={running}
               connected={connected}
               modelReady={modelReady}
+              isMobile={isMobile}
               onConnectModel={openModelSetup}
               onConfigureVoiceInput={() => openSettings("voice")}
               onSend={send}

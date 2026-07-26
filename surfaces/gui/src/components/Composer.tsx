@@ -77,13 +77,14 @@ interface Props {
   resetKey?: string;
   // Surface-specific hint shown in the empty textarea.
   placeholder?: string;
+  // Mobile flag: skips the attach menu, opens the OS file picker directly (user-gesture trust).
+  isMobile?: boolean;
 }
 
 export function Composer(props: Props) {
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragging, setDragging] = useState(false);
-  const [attachMenuOpen, setAttachMenuOpen] = useState(false);
   const [dictation, setDictation] = useState<DictationStatus | null>(null);
   const [dictationBusy, setDictationBusy] = useState<string | null>(null);
   const [dictationError, setDictationError] = useState<string | null>(null);
@@ -244,10 +245,13 @@ export function Composer(props: Props) {
   };
 
   // The "+" menu offers typed shortcuts; each just narrows the OS picker's filter.
-  const pickFiles = (accept: string) => {
-    setAttachMenuOpen(false);
+  // `source` — "gallery" opens the device's photo picker (갤러리 앱) directly.
+  // accept="image/*" alone on Android Chrome opens the photo picker; no `capture` attr
+  // (capture would force the camera app instead of the gallery).
+  const pickFiles = (accept: string, source?: "gallery") => {
     if (fileInput.current) {
-      fileInput.current.accept = accept;
+      fileInput.current.accept = source === "gallery" ? "image/*" : accept;
+      fileInput.current.removeAttribute("capture");
       fileInput.current.click();
     }
   };
@@ -400,30 +404,16 @@ export function Composer(props: Props) {
 
         {/* Three-control row (§22): + attach · Mode ⌄ …(right)… model (fresh only) · send */}
         <div className="px-2.5 pb-2.5 pt-1 flex items-center gap-1.5">
-          {/* + attach menu */}
+          {/* + attach — 바로 파일 탐색기 실행 (메뉴 없음) */}
           <div className="relative">
             <button
-              className={iconBtn + (attachMenuOpen ? " bg-paper text-ink" : "")}
+              className={iconBtn}
               title="Attach"
               aria-label="Attach"
-              onClick={() => setAttachMenuOpen((v) => !v)}
+              onClick={() => pickFiles("")}
             >
               <Icon name="plus" size={17} />
             </button>
-            {attachMenuOpen && (
-              <>
-                <div className="fixed inset-0 z-30" onClick={() => setAttachMenuOpen(false)} />
-                <div className="absolute z-40 bottom-full mb-1 left-0 min-w-[180px] rounded-xl border border-line bg-panel shadow-2xl py-1.5">
-                  {attachItem("image", "Photo or image", () => pickFiles("image/*"))}
-                  {attachItem("file", "PDF", () => pickFiles("application/pdf,.pdf"))}
-                  {attachItem(
-                    "fileCode",
-                    "Other files",
-                    () => pickFiles("text/*,.md,.csv,.json,.yaml,.yml,.log,.py,.ts,.tsx,.js,.rs,.go,.toml"),
-                  )}
-                </div>
-              </>
-            )}
           </div>
           <input
             ref={fileInput}
@@ -631,18 +621,6 @@ function ModeMenu({
         </>
       )}
     </div>
-  );
-}
-
-// A row in the "+" attach menu.
-function attachItem(icon: "image" | "file" | "fileCode", label: string, onClick: () => void) {
-  return (
-    <button
-      className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[13px] text-left hover:bg-paper"
-      onClick={onClick}
-    >
-      <Icon name={icon} size={15} className="shrink-0 text-muted" /> {label}
-    </button>
   );
 }
 
